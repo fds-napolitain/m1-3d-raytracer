@@ -13,6 +13,7 @@
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
   IntersectionValues result;
   //TODO: Ray-sphere setup
+  
   return result;
 }
 

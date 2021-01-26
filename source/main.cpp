@@ -216,6 +216,7 @@ bool shadowFeeler(vec4 p0, Object *object){
 
   //TODO: Shadow code here
 
+
   return inShadow;
 }
 
@@ -229,6 +230,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
   if(depth > maxDepth){ return color; }
 
   //TODO: Raytracing code here
+
 
   return color;
 
