@@ -11,11 +11,9 @@
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
-  IntersectionValues result;
-  //TODO: Ray-sphere setup
-  result.t = raySphereIntersection(p0, V);
-
-  return result;
+	IntersectionValues result;
+	result.t = raySphereIntersection(p0, V);
+	return result;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -26,7 +24,6 @@ double Sphere::raySphereIntersection(vec4 p0, vec4 V){
 	double b = 2*dot(V, (cross(p0, this->center)));
 	double c = dot(cross(p0, this->center), cross(p0, this->center)) - this->radius*this->radius;
 	double delta = b*b - 4*a*c;
-	double delrt = sqrt(delta);
 	if (delta > 0) {
 		return a >= 0 ? (-b+sqrt(delta))/2*a : (-b-sqrt(delta))/2*a;
 	} else if (delta == 0) {

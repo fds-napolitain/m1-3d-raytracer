@@ -225,14 +225,14 @@ bool shadowFeeler(vec4 p0, Object *object){
 /* ----------  return color, right now shading is approx based      --------- */
 /* ----------  depth                                                --------- */
 vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
-  vec4 color = vec4(0.0,0.0,0.0,0.0);
+	vec4 color = vec4(0.0,0.0,0.0,0.0);
 
-  if(depth > maxDepth){ return color; }
+	if(depth > maxDepth){ return color; }
 
-  //TODO: Raytracing code here
-
-
-  return color;
+	//TODO: Raytracing code here
+	Sphere sphere = Sphere("sphere");
+	sphere.intersect(p0, E);
+	return color;
 
 }
 
