@@ -21,10 +21,6 @@ struct vec2 {
     GLfloat  x;
     GLfloat  y;
 
-    GLfloat sum() {
-		return x + y;
-    }
-
     //
     //  --- Constructors and Destructors ---
     //
@@ -163,10 +159,6 @@ struct vec3 {
     GLfloat  x;
     GLfloat  y;
     GLfloat  z;
-
-	GLfloat sum() {
-		return x + y + z;
-	}
 
     //
     //  --- Constructors and Destructors ---
@@ -323,10 +315,6 @@ struct vec4 {
     GLfloat  y;
     GLfloat  z;
     GLfloat  w;
-
-	GLfloat sum() {
-		return x + y + z + w;
-	}
 
     //
     //  --- Constructors and Destructors ---

@@ -21,13 +21,19 @@ Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
 /* -------------------------------------------------------------------------- */
 /* ------ Ray = p0 + t*V  sphere at origin center and radius radius : Find t  */
 double Sphere::raySphereIntersection(vec4 p0, vec4 V){
-  double t = std::numeric_limits<double>::infinity();
-  // t²V*V + 2tV(p0-this.centre) + ||p0-this.centre||² - this.radius
-  double a = (V*V).sum();
-  double b = (2*V*(cross(p0, this->center))).sum();
-  double c = (cross(p0, this->center)*cross(p0, this->center)).sum() - this->radius*this->radius;
-  double delta = b*b - 4*a*c;
-  return t;
+	// t²V*V + 2tV(p0-this.centre) + ||p0-this.centre||² - this.radius
+	double a = dot(V, V);
+	double b = 2*dot(V, (cross(p0, this->center)));
+	double c = dot(cross(p0, this->center), cross(p0, this->center)) - this->radius*this->radius;
+	double delta = b*b - 4*a*c;
+	double delrt = sqrt(delta);
+	if (delta > 0) {
+		return a >= 0 ? (-b+sqrt(delta))/2*a : (-b-sqrt(delta))/2*a;
+	} else if (delta == 0) {
+		return -b/2*a;
+	} else {
+		return std::numeric_limits<double>::infinity();
+	}
 }
 
 /* -------------------------------------------------------------------------- */
