@@ -233,7 +233,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	Object::IntersectionValues result;
 	for (int i = 0; i < sceneObjects.size(); ++i) {
 		result = sceneObjects[i]->intersect(p0, E);
-		if (result.t != std::numeric_limits<double>::infinity()) {
+		if (result.t < std::numeric_limits<double>::infinity()) {
 			color = sceneObjects[i]->shadingValues.color;
 		}
 	}

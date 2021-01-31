@@ -13,8 +13,8 @@
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
 	IntersectionValues result;
 	result.t = raySphereIntersection(p0, V);
-	result.P = p0;
-	result.N = V;
+	result.N = length(V);
+	result.P = p0 + result.t * V;
 	return result;
 }
 
@@ -28,7 +28,7 @@ double Sphere::raySphereIntersection(vec4 p0, vec4 V){
 	double c = dot(p0c, p0c) - this->radius*this->radius;
 	double delta = b*b - 4*a*c;
 	if (delta > 0) {
-		return a >= 0 ? (-b+sqrt(delta))/2*a : (-b-sqrt(delta))/2*a;
+		return (-b + sqrt(delta)) / 2 * a >= (-b - sqrt(delta)) / 2 * a ? (-b+sqrt(delta))/2*a : (-b-sqrt(delta))/2*a;
 	} else if (delta == 0) {
 		return -b/2*a;
 	} else {
