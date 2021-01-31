@@ -225,7 +225,7 @@ bool shadowFeeler(vec4 p0, Object *object){
 /* ----------  return color, right now shading is approx based      --------- */
 /* ----------  depth                                                --------- */
 vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
-	vec4 color = vec4(1.0,0.0,0.0,1.0);
+	vec4 color = vec4(0.0,0.0,0.0,0.0);
 
 	if(depth > maxDepth){ return color; }
 
