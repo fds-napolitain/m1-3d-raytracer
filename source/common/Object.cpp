@@ -13,7 +13,7 @@
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
 	IntersectionValues result;
 	result.t = raySphereIntersection(p0, V);
-	result.N = length(V);
+	result.N = V;
 	result.P = p0 + result.t * V;
 	return result;
 }
@@ -27,9 +27,16 @@ double Sphere::raySphereIntersection(vec4 p0, vec4 V){
 	double c = dot(p0-this->center, p0-this->center) - this->radius*this->radius;
 	double delta = b*b - 4*a*c;
 	if (delta > 0) {
-		return (-b+sqrt(delta))/2*a;
+		double t1 = (-b - sqrt(delta)) / (2 * a);
+		double t2 = (-b + sqrt(delta)) / (2 * a);
+		if (t1 < t2 && t1 > 0) {
+			return t1;
+		} else if (t2 < t1 && t2 > 0) {
+			return t2;
+		}
+		return std::numeric_limits<double>::infinity();
 	} else if (delta == 0) {
-		return -b/2*a;
+		return (-b)/(2*a);
 	} else {
 		return std::numeric_limits<double>::infinity();
 	}

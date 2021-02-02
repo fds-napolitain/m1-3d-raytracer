@@ -225,16 +225,18 @@ bool shadowFeeler(vec4 p0, Object *object){
 /* ----------  return color, right now shading is approx based      --------- */
 /* ----------  depth                                                --------- */
 vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
-	vec4 color = vec4(0.0,0.0,0.0,0.0);
+	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
 
 	if(depth > maxDepth){ return color; }
 
 	//TODO: Raytracing code here
 	Object::IntersectionValues result;
+    double minDist = std::numeric_limits<double>::infinity();
 	for (int i = 0; i < sceneObjects.size(); ++i) {
 		result = sceneObjects[i]->intersect(p0, E);
-		if (result.t < std::numeric_limits<double>::infinity()) {
-			color = sceneObjects[i]->shadingValues.color;
+		if (result.t < minDist) {
+            minDist = result.t;
+            color = sceneObjects[i]->shadingValues.color;
 		}
 	}
 
@@ -451,27 +453,38 @@ void initUnitSquare(){
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
-static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, GLFW_TRUE);
-  if (key == GLFW_KEY_1 && action == GLFW_PRESS){
-    scene = _SPHERE;
-    initUnitSphere();
-  }
-  if (key == GLFW_KEY_2 && action == GLFW_PRESS){
-    scene = _SQUARE;
-    initUnitSquare();
-  }
-  if (key == GLFW_KEY_3 && action == GLFW_PRESS){
-    scene = _BOX;
-    initCornellBox();
-  }
+static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
 
-  initGL();
-  if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    rayTrace();
+        if (scene != _SPHERE) {
+            initUnitSphere();
+            initGL();
+            scene = _SPHERE;
+        }
+
+    }
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+        if (scene != _SQUARE) {
+            initUnitSquare();
+            initGL();
+            scene = _SQUARE;
+        }
+    }
+    if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
+        if (scene != _BOX) {
+            initCornellBox();
+            initGL();
+            scene = _BOX;
+        }
+    }
+
+
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        rayTrace();
 }
+
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
