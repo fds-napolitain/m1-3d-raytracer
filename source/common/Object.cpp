@@ -23,7 +23,7 @@ Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V){
 double Sphere::raySphereIntersection(vec4 p0, vec4 V){
 	// t²V*V + 2tV(p0-this.centre) + ||p0-this.centre||² - this.radius
 	double a = dot(V, V);
-	double b = 2*dot(V, p0-this->center);
+	double b = 2.0*dot(V, p0-this->center);
 	double c = dot(p0-this->center, p0-this->center) - this->radius*this->radius;
 	double delta = b*b - 4*a*c;
 	if (delta > 0) {

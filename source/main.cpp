@@ -226,20 +226,28 @@ bool shadowFeeler(vec4 p0, Object *object){
 /* ----------  depth                                                --------- */
 vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+    E = normalize(E);
 
 	if(depth > maxDepth){ return color; }
 
 	//TODO: Raytracing code here
-	Object::IntersectionValues result;
+	std::vector<Object::IntersectionValues> intersections;
+    for (int i = 0; i < sceneObjects.size(); i++) {
+        intersections.push_back(sceneObjects[i]->intersect(p0, E));
+        (intersections[intersections.size() - 1]).ID_ = i;
+    }
     double minDist = std::numeric_limits<double>::infinity();
-	for (int i = 0; i < sceneObjects.size(); ++i) {
-		result = sceneObjects[i]->intersect(p0, E);
-		if (result.t < minDist) {
-            minDist = result.t;
-            color = sceneObjects[i]->shadingValues.color;
-		}
+    int closestObject = -1;
+	for (int i = 0; i < intersections.size(); ++i) {
+        if (intersections[i].t != minDist && intersections[i].t < minDist) {
+            minDist = intersections[i].t;
+            closestObject = intersections[i].ID_;
+        }
 	}
-
+    if (closestObject < 0) {
+        return color;
+    }
+    color = sceneObjects[closestObject]->shadingValues.color;
 	return color;
 
 }
