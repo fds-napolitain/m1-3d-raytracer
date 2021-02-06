@@ -47,14 +47,14 @@ double Sphere::raySphereIntersection(vec4 p0, vec4 V){
 Object::IntersectionValues Square::intersect(vec4 p0, vec4 V){
   IntersectionValues result;
   //TODO: Ray-square setup
-  
+  result.t = raySquareIntersection(p0, V);
   return result;
 }
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 double Square::raySquareIntersection(vec4 p0, vec4 V){
-  double t   = std::numeric_limits< double >::infinity();
+  double t = std::numeric_limits<double>::infinity();
   //TODO: Ray-square intersection;
   return t;
 }
