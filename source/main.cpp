@@ -234,7 +234,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	std::vector<Object::IntersectionValues> intersections;
     for (int i = 0; i < sceneObjects.size(); i++) {
         intersections.push_back(sceneObjects[i]->intersect(p0, E));
-        (intersections[intersections.size() - 1]).ID_ = i;
+        intersections[intersections.size() - 1].ID_ = i;
     }
     double minDist = std::numeric_limits<double>::infinity();
     int closestObject = -1;
@@ -296,7 +296,7 @@ void initCornellBox(){
   { //Back Wall
     sceneObjects.push_back(new Square("Back Wall", Translate(0.0, 0.0, -2.0)*Scale(2.0,2.0,1.0)));
     Object::ShadingValues _shadingValues;
-    _shadingValues.color = vec4(1.0,1.0,1.0,1.0);
+    _shadingValues.color = vec4(1.0,0.75,0.8,1.0);
     _shadingValues.Ka = 0.0;
     _shadingValues.Kd = 1.0;
     _shadingValues.Ks = 0.0;
@@ -324,7 +324,7 @@ void initCornellBox(){
   { //Right Wall
     sceneObjects.push_back(new Square("Right Wall", RotateY(-90)*Translate(0.0, 0.0, -2.0)*Scale(2.0, 2.0, 1.0 )));
     Object::ShadingValues _shadingValues;
-    _shadingValues.color = vec4(0.5,0.0,0.5,1.0);
+    _shadingValues.color = vec4(0.5,0.5,0.5,1.0);
     _shadingValues.Ka = 0.0;
     _shadingValues.Kd = 1.0;
     _shadingValues.Ks = 0.0;
@@ -338,7 +338,7 @@ void initCornellBox(){
   { //Floor
     sceneObjects.push_back(new Square("Floor", RotateX(-90)*Translate(0.0, 0.0, -2.0)*Scale(2.0, 2.0, 1.0)));
     Object::ShadingValues _shadingValues;
-    _shadingValues.color = vec4(1.0,1.0,1.0,1.0);
+    _shadingValues.color = vec4(1.0,1.0,0.0,1.0);
     _shadingValues.Ka = 0.0;
     _shadingValues.Kd = 1.0;
     _shadingValues.Ks = 0.0;
