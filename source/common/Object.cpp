@@ -79,12 +79,12 @@ double Square::raySquareIntersection(vec4 p0, vec4 V) {
 		vec3 bd = toVec3(this->mesh.vertices[2]);
 		vec3 hg = toVec3(this->mesh.vertices[5]);
 		vec3 p = p03 + V3*t;
-		vec3 hgdp = cross(hd - hg, p - hg);
+		vec3 abp = cross(hd - hg, p - hg);
 		vec3 bcp = cross(bd - hd, p - bd);
 		vec3 cdp = cross(hg - bg, p - bg);
 		vec3 dap = cross(bg - bd, p - bg);
-		if ((dot(hgdp, this->normal) >= 0 && dot(bcp, this->normal) >= 0 && dot(cdp, this->normal) >= 0
-			&& dot(dap, this->normal) >= 0) || (dot(hgdp, this->normal) < 0 && dot(bcp, this->normal) < 0
+		if ((dot(abp, this->normal) >= 0 && dot(bcp, this->normal) >= 0 && dot(cdp, this->normal) >= 0
+			&& dot(dap, this->normal) >= 0) || (dot(abp, this->normal) < 0 && dot(bcp, this->normal) < 0
 				&& dot(cdp, this->normal) < 0 && dot(dap, this->normal) < 0)) {
 			return t;
 		}
