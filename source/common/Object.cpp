@@ -66,29 +66,27 @@ Object::IntersectionValues Square::intersect(vec4 p0, vec4 V) {
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 double Square::raySquareIntersection(vec4 p0, vec4 V) {
-	vec3 po3 = toVec3(p0);
+	vec3 p03 = toVec3(p0);
 	vec3 V3 = toVec3(V);
 	vec3 point3 = toVec3(this->point);
 	// (D - on) / (dn) avec D = an
-	double denominateur = dot(point3, this->normal) - dot(po3, this->normal);
+	double denominateur = (double) dot(point3, this->normal) - (double) dot(p03, this->normal);
 	double numerateur = dot(V3, this->normal);
 	if (numerateur != 0 && denominateur / numerateur > 0) {
-		// aretes (coordonnées barycentriques)
-		// (0 2) (1 5)
-		// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-		vec3 a = toVec3(this->mesh.vertices[0]);
-		vec3 b = toVec3(this->mesh.vertices[1]);
-		vec3 c = toVec3(this->mesh.vertices[2]);
-		vec3 d = toVec3(this->mesh.vertices[5]);
-		vec3 p = (c - a) / 2;
-		vec3 abp = cross(b - a, p - a);
-		vec3 bcp = cross(c - b, p - b);
-		vec3 cdp = cross(d - c, p - c);
-		vec3 dap = cross(a - d, p - d);
-		if ((dot(abp, this->normal) >= 0 && dot(bcp, this->normal) >= 0 && dot(cdp, this->normal) >= 0
-			&& dot(dap, this->normal) >= 0) || (dot(abp, this->normal) < 0 && dot(bcp, this->normal) < 0
+		double t = denominateur / numerateur;
+		vec3 bg = toVec3(this->mesh.vertices[0]);
+		vec3 hd = toVec3(this->mesh.vertices[1]);
+		vec3 bd = toVec3(this->mesh.vertices[2]);
+		vec3 hg = toVec3(this->mesh.vertices[5]);
+		vec3 p = p03 + V3*t;
+		vec3 hgdp = cross(hd - hg, p - hg);
+		vec3 bcp = cross(bd - hd, p - bd);
+		vec3 cdp = cross(hg - bg, p - bg);
+		vec3 dap = cross(bg - bd, p - bg);
+		if ((dot(hgdp, this->normal) >= 0 && dot(bcp, this->normal) >= 0 && dot(cdp, this->normal) >= 0
+			&& dot(dap, this->normal) >= 0) || (dot(hgdp, this->normal) < 0 && dot(bcp, this->normal) < 0
 				&& dot(cdp, this->normal) < 0 && dot(dap, this->normal) < 0)) {
-			return denominateur / numerateur;
+			return t;
 		}
 	}
 	return std::numeric_limits<double>::infinity();
