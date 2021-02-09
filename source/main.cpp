@@ -234,12 +234,12 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	std::vector<Object::IntersectionValues> intersections;
     for (int i = 0; i < sceneObjects.size(); i++) {
         intersections.push_back(sceneObjects[i]->intersect(p0, E));
-        intersections[intersections.size() - 1].ID_ = i;
+        intersections[i].ID_ = i;
     }
     double minDist = std::numeric_limits<double>::infinity();
     int closestObject = -1;
 	for (int i = 0; i < intersections.size(); ++i) {
-        if (intersections[i].t != minDist && intersections[i].t < minDist) {
+        if (intersections[i].t < minDist) {
             minDist = intersections[i].t;
             closestObject = intersections[i].ID_;
         }
