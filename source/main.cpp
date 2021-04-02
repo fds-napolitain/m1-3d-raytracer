@@ -13,7 +13,6 @@ using namespace Angel;
 typedef vec4  color4;
 typedef vec4  point4;
 
-
 //Scene variables
 enum{_SPHERE, _SQUARE, _BOX};
 int scene = _SPHERE; //Simple sphere, square or cornell box
@@ -220,12 +219,19 @@ bool shadowFeeler(vec4 p0, Object *object){
   return inShadow;
 }
 
+float maximal(float a, float b) {
+    if (a >= b) {
+        return a;
+    }
+    return b;
+}
+
 /* -------------------------------------------------------------------------- */
 /* ----------  cast Ray = p0 + t*dir and intersect with sphere      --------- */
 /* ----------  return color, right now shading is approx based      --------- */
 /* ----------  depth                                                --------- */
 vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
-	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+	vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
     E = normalize(E);
 
 	if(depth > maxDepth){ return color; }
@@ -241,13 +247,45 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	for (int i = 0; i < intersections.size(); ++i) {
         if (intersections[i].t < minDist) {
             minDist = intersections[i].t;
-            closestObject = intersections[i].ID_;
+            closestObject = i;
         }
 	}
     if (closestObject < 0) {
         return color;
     }
     color = sceneObjects[closestObject]->shadingValues.color;
+
+    vec4 N = normalize(intersections[closestObject].N);
+    vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
+    vec4 C = normalize(cameraPosition - intersections[closestObject].P); // caméra
+    vec4 reflection = reflect(E, N);
+
+    color4 material_ambient(
+        lightColor.x * sceneObjects[closestObject]->shadingValues.Ka,
+        lightColor.y * sceneObjects[closestObject]->shadingValues.Ka,
+        lightColor.z * sceneObjects[closestObject]->shadingValues.Ka, 1.0
+    );
+
+    color4 material_diffuse(
+        lightColor.x * sceneObjects[closestObject]->shadingValues.Kd,
+        lightColor.y * sceneObjects[closestObject]->shadingValues.Kd,
+        lightColor.z * sceneObjects[closestObject]->shadingValues.Kd, 1.0
+    );
+
+    color4 material_specular(
+        lightColor.x * sceneObjects[closestObject]->shadingValues.Ks,
+        lightColor.y * sceneObjects[closestObject]->shadingValues.Ks,
+        lightColor.z * sceneObjects[closestObject]->shadingValues.Ks, 1.0
+    );
+
+    float material_shininess = sceneObjects[closestObject]->shadingValues.Kn;
+
+    color4 ambient_product = GLState::light_ambient * material_ambient;
+    color4 diffuse_product = GLState::light_diffuse * material_diffuse * maximal(0.0f, dot(L, N));
+    color4 specular_product = GLState::light_specular * material_specular * pow(maximal(0.0f, dot(reflection, C)), material_shininess);
+
+    color = (ambient_product + diffuse_product + specular_product);
+
 	return color;
 
 }

@@ -31,9 +31,9 @@ public:
     } ShadingValues;
 
     typedef struct{
-        double t;
-        vec4 P;
-        vec4 N;
+        double t; // intersection
+        vec4 P; // position
+        vec4 N; // normal
         int ID_;
         std::string name;
     } IntersectionValues;

@@ -5,7 +5,6 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-
 #include "common.h"
 
 // cast
@@ -22,7 +21,7 @@ vec4 toVec4(vec3 v) {
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V) {
 	IntersectionValues result;
 	result.t = raySphereIntersection(p0, V);
-	result.N = V;
+	result.N = p0 - this->center;;
 	result.P = p0 + result.t * V;
 	return result;
 }
