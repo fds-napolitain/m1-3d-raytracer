@@ -13,7 +13,7 @@ vec3 toVec3(vec4 v) {
 }
 
 vec4 toVec4(vec3 v) {
-	return vec4(v.x, v.y, v.z, 0);
+	return vec4(v.x, v.y, v.z, 1);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -21,7 +21,7 @@ vec4 toVec4(vec3 v) {
 Object::IntersectionValues Sphere::intersect(vec4 p0, vec4 V) {
 	IntersectionValues result;
 	result.t = raySphereIntersection(p0, V);
-	result.N = normalize(p0 - this->center);
+	result.N = normalize(result.P - toVec4(this->center));
 	result.P = p0 + result.t * V;
 	return result;
 }

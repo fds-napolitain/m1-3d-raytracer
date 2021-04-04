@@ -219,13 +219,6 @@ bool shadowFeeler(vec4 p0, Object *object){
   return inShadow;
 }
 
-float maximal(float a, float b) {
-    if (a >= b) {
-        return a;
-    }
-    return b;
-}
-
 /* -------------------------------------------------------------------------- */
 /* ----------  cast Ray = p0 + t*dir and intersect with sphere      --------- */
 /* ----------  return color, right now shading is approx based      --------- */
@@ -255,7 +248,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     }
     color = sceneObjects[closestObject]->shadingValues.color;
 
-    vec4 N = normalize(intersections[closestObject].N);
+    vec4 N = intersections[closestObject].N;
     vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
     vec4 C = normalize(cameraPosition - intersections[closestObject].P); // caméra
     vec4 reflection = reflect(E, N);
@@ -281,10 +274,19 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     float material_shininess = sceneObjects[closestObject]->shadingValues.Kn;
 
     color4 ambient_product = GLState::light_ambient * material_ambient;
-    color4 diffuse_product = GLState::light_diffuse * material_diffuse * maximal(0.0f, dot(L, N));
-    color4 specular_product = GLState::light_specular * material_specular * pow(maximal(0.0f, dot(reflection, C)), material_shininess);
+    color4 diffuse_product = GLState::light_diffuse * material_diffuse * max(0.0f, dot(L, N));
+    color4 specular_product = GLState::light_specular * material_specular * pow(max(0.0f, dot(reflection, C)), material_shininess);
 
-    color = (ambient_product + diffuse_product + specular_product);
+    color *= (ambient_product + diffuse_product);
+    
+    // dépassement couleur
+    if (color.x > 255) color = 255;
+    if (color.y > 255) color = 255;
+    if (color.z > 255) color = 255;
+    if (color.x < 0) color = 0;
+    if (color.y < 0) color = 0;
+    if (color.z < 0) color = 0;
+    color.w = 1;
 
 	return color;
 
@@ -477,6 +479,7 @@ void initUnitSquare(){
   cameraPosition = point4( 0.0, 0.0, 3.0, 1.0 );
   lightPosition = point4( 0.0, 0.0, 4.0, 1.0 );
   lightColor = color4( 1.0, 1.0, 1.0, 1.0);
+
 
   sceneObjects.clear();
 
