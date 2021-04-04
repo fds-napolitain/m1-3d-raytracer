@@ -251,7 +251,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     vec4 N = normalize(intersections[closestObject].N);
     vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
     vec4 C = normalize(cameraPosition - intersections[closestObject].P); // caméra
-    vec4 reflection = reflect(E, N);
+    vec4 reflection = normalize(reflect(L, N));
 
     color4 material_ambient(
         lightColor.x * sceneObjects[closestObject]->shadingValues.Ka,
@@ -260,22 +260,22 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     );
 
     color4 material_diffuse(
-        lightColor.x * sceneObjects[closestObject]->shadingValues.Kd,
-        lightColor.y * sceneObjects[closestObject]->shadingValues.Kd,
-        lightColor.z * sceneObjects[closestObject]->shadingValues.Kd, 1.0
+        lightColor.x,
+        lightColor.y,
+        lightColor.z, 1.0
     );
 
     color4 material_specular(
-        lightColor.x * sceneObjects[closestObject]->shadingValues.Ks,
-        lightColor.y * sceneObjects[closestObject]->shadingValues.Ks,
-        lightColor.z * sceneObjects[closestObject]->shadingValues.Ks, 1.0
+        sceneObjects[closestObject]->shadingValues.Ks,
+        sceneObjects[closestObject]->shadingValues.Ks,
+        sceneObjects[closestObject]->shadingValues.Ks, 1.0
     );
 
     float material_shininess = sceneObjects[closestObject]->shadingValues.Kn;
 
     color4 ambient_product = GLState::light_ambient * material_ambient;
     color4 diffuse_product = GLState::light_diffuse * material_diffuse * max(0.0f, dot(L, N));
-    color4 specular_product = GLState::light_specular * material_specular * pow(max(0.0f, dot(reflection, C)), material_shininess);
+    color4 specular_product = GLState::light_specular * material_specular * pow(max(0.0f, dot(C, reflection)), material_shininess);
 
     color *= (ambient_product + diffuse_product + specular_product);
     
