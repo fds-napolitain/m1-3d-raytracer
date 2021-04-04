@@ -277,14 +277,12 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color4 specular_product = GLState::light_specular * material_specular * pow(max(0.0f, dot(reflection, E)), material_shininess);
 
     color *= (ambient_product + diffuse_product + specular_product);
-    
+
     // dépassement couleur
-    if (color.x > 255) color = 255;
-    if (color.y > 255) color = 255;
-    if (color.z > 255) color = 255;
-    if (color.x < 0) color = 0;
-    if (color.y < 0) color = 0;
-    if (color.z < 0) color = 0;
+    if (color.x > 1.0) color = 1.0;
+    if (color.y > 1.0) color = 1.0;
+    if (color.z > 1.0) color = 1.0;
+
     color.w = 1;
 
 	return color;
