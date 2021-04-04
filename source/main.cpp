@@ -284,6 +284,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     if (color.z > 1.0) color = 1.0;
 
     color.w = 1;
+    castRay(p0, lightPosition, lastHitObject, 30);
 
 	return color;
 
