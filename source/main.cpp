@@ -21,7 +21,7 @@ point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
 std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
-int lightSpotSampling = 10000;
+int lightSpotSampling = 400; // carré 20 * 20
 
 //Recursion depth for raytracer
 int maxDepth = 3;
