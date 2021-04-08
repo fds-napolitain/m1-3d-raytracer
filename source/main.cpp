@@ -21,7 +21,7 @@ point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
 std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
-int lightSpotSampling = 81;
+int lightSpotSampling = 10000;
 
 //Recursion depth for raytracer
 int maxDepth = 3;
@@ -230,8 +230,8 @@ bool shadowFeeler(vec4 p0, Object *object){
 }
 
 // ombre douce (retourne un pourcentage entre 0.0 et 1.0)
-float shadowFeeler(vec4 p0) {
-    float inShadow = 1.0f;
+double shadowFeeler(vec4 p0) {
+    double inShadow = 1.0;
 
     // Shadow code here
     for (int i = 0; i < sceneObjects.size(); i++) {
@@ -315,14 +315,14 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.w = 1;
 
     // ombres brut (image attendu)
-    if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
-        return vec4(0.0, 0.0, 0.0, 1.0);
+    //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
+    //    return vec4(0.0, 0.0, 0.0, 1.0);
 
     // ombres douces
-    //float shadow = shadowFeeler(intersections[closestObject].P, NULL);
-    //color.x *= shadow;
-    //color.y *= shadow;
-    //color.z *= shadow;
+    double shadow = shadowFeeler(intersections[closestObject].P);
+    color.x *= shadow;
+    color.y *= shadow;
+    color.z *= shadow;
 
 	return color;
 
@@ -368,7 +368,7 @@ void initCornellBox(){
   lightColor = color4( 1.0, 1.0, 1.0, 1.0);
   for (int i = 0; i < sqrt(lightSpotSampling); i++) { // spot de lumiere (ombre douce)
       for (int j = 0; j < sqrt(lightSpotSampling); j++) {
-          lightSpot.push_back(point4(0.0 - sqrt(lightSpotSampling) / 2 + 0.1 * j, 1.5, 0.0 - sqrt(lightSpotSampling) / 2 + 0.1 * i, 1.0));
+          lightSpot.push_back(point4(0.0 + j/sqrt(lightSpotSampling), 1.5, 0.0 + i/sqrt(lightSpotSampling), 1.0));
       }
   }
 
