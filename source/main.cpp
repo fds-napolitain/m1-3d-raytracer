@@ -20,6 +20,8 @@ std::vector < Object * > sceneObjects;
 point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
+std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
+int lightSpotSampling = 36;
 
 //Recursion depth for raytracer
 int maxDepth = 3;
@@ -209,14 +211,35 @@ void castRayDebug(vec4 p0, vec4 dir){
 
 }
 
+
+
 /* -------------------------------------------------------------------------- */
+// ombre brut
 bool shadowFeeler(vec4 p0, Object *object){
   bool inShadow = false;
 
   //TODO: Shadow code here
-
+  for (int i = 0; i < sceneObjects.size(); i++) {
+      double intersect = sceneObjects[i]->intersect(lightPosition, p0 - lightPosition).t;
+      if ((intersect + EPSILON) < 1.0) {
+          inShadow = true;
+      }
+  }
 
   return inShadow;
+}
+
+// ombre douce (retourne un pourcentage)
+float shadowFeeler(vec4 p0) {
+    float inShadow = 1.0f;
+    for (int i = 0; i < sceneObjects.size(); i++) {
+        for (int j = 0; j < lightSpotSampling; j++) {
+            if (sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]).t + EPSILON < 1.0) {
+                inShadow -= 1/lightSpotSampling;
+            }
+        }
+    }
+    return inShadow;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -251,6 +274,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     vec4 N = normalize(intersections[closestObject].N);
     vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
     vec4 reflection = normalize(reflect(L, N));
+    GLfloat costheta = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costeta * ||N|| * ||L||
 
     color4 material_ambient(
         lightColor.x * sceneObjects[closestObject]->shadingValues.Ka,
@@ -273,18 +297,30 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     float material_shininess = sceneObjects[closestObject]->shadingValues.Kn;
 
     color4 ambient_product = GLState::light_ambient * material_ambient;
-    color4 diffuse_product = GLState::light_diffuse * material_diffuse * max(0.0f, dot(L, N));
-    color4 specular_product = GLState::light_specular * material_specular * pow(max(0.0f, dot(reflection, E)), material_shininess);
+    color4 diffuse_product = GLState::light_diffuse * material_diffuse * fmax(0.0f, costheta);
+    color4 specular_product = GLState::light_specular * material_specular * pow(fmax(0.0f, dot(reflection, E)), material_shininess);
 
     color *= (ambient_product + diffuse_product + specular_product);
 
     // dépassement couleur
-    if (color.x > 1.0) color = 1.0;
-    if (color.y > 1.0) color = 1.0;
-    if (color.z > 1.0) color = 1.0;
-
+    float cmax = 1.0f;
+    for (int i = 0; i < 3; i++) {
+        cmax = max(color[i], cmax);
+    }
+    color.x /= cmax;
+    color.y /= cmax;
+    color.z /= cmax;
     color.w = 1;
-    castRay(p0, lightPosition, lastHitObject, 30);
+
+    // ombres brut
+    //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
+    //    return vec4(0.0, 0.0, 0.0, 1.0);
+
+    // ombres douces
+    float shadow = shadowFeeler(intersections[closestObject].P, NULL);
+    color.x *= shadow;
+    color.y *= shadow;
+    color.z *= shadow;
 
 	return color;
 
@@ -328,6 +364,11 @@ void initCornellBox(){
   cameraPosition = point4( 0.0, 0.0, 6.0, 1.0 );
   lightPosition = point4( 0.0, 1.5, 0.0, 1.0 );
   lightColor = color4( 1.0, 1.0, 1.0, 1.0);
+  for (int i = 0; i < sqrt(lightSpotSampling); i++) { // spot de lumiere (ombre douce)
+      for (int j = 0; j < sqrt(lightSpotSampling); j++) {
+          lightSpot.push_back(point4(0.0 - sqrt(lightSpotSampling) / 2 + 0.1 * j, 1.5, 0.0 - sqrt(lightSpotSampling) / 2 + 0.1 * i, 1.0));
+      }
+  }
 
   sceneObjects.clear();
 
