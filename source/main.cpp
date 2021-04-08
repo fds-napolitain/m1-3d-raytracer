@@ -21,7 +21,7 @@ point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
 std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
-int lightSpotSampling = 36;
+int lightSpotSampling = 81;
 
 //Recursion depth for raytracer
 int maxDepth = 3;
@@ -229,13 +229,15 @@ bool shadowFeeler(vec4 p0, Object *object){
   return inShadow;
 }
 
-// ombre douce (retourne un pourcentage)
+// ombre douce (retourne un pourcentage entre 0.0 et 1.0)
 float shadowFeeler(vec4 p0) {
     float inShadow = 1.0f;
+
+    // Shadow code here
     for (int i = 0; i < sceneObjects.size(); i++) {
         for (int j = 0; j < lightSpotSampling; j++) {
             if (sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]).t + EPSILON < 1.0) {
-                inShadow -= 1/lightSpotSampling;
+                inShadow -= 1.0/lightSpotSampling;
             }
         }
     }
@@ -274,7 +276,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     vec4 N = normalize(intersections[closestObject].N);
     vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
     vec4 reflection = normalize(reflect(L, N));
-    GLfloat costheta = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costeta * ||N|| * ||L||
+    GLfloat costheta = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costheta * ||N|| * ||L||
 
     color4 material_ambient(
         lightColor.x * sceneObjects[closestObject]->shadingValues.Ka,
@@ -312,15 +314,15 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.z /= cmax;
     color.w = 1;
 
-    // ombres brut
-    //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
-    //    return vec4(0.0, 0.0, 0.0, 1.0);
+    // ombres brut (image attendu)
+    if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
+        return vec4(0.0, 0.0, 0.0, 1.0);
 
     // ombres douces
-    float shadow = shadowFeeler(intersections[closestObject].P, NULL);
-    color.x *= shadow;
-    color.y *= shadow;
-    color.z *= shadow;
+    //float shadow = shadowFeeler(intersections[closestObject].P, NULL);
+    //color.x *= shadow;
+    //color.y *= shadow;
+    //color.z *= shadow;
 
 	return color;
 
