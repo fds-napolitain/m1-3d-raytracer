@@ -312,7 +312,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.x /= cmax;
     color.y /= cmax;
     color.z /= cmax;
-    color.w = (1.0 - sceneObjects[closestObject]->shadingValues.Kt);
+    color.w = 1.0;
 
     // ombres brut (image attendu)
     //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
@@ -327,16 +327,17 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     vec4 C = normalize(intersections[closestObject].P - cameraPosition); // camera
     
     // reflection
-    vec4 reflection2 = normalize(reflect(-1 * intersections[closestObject].P, N));
-    if (sceneObjects[closestObject]->shadingValues.Kr != 0 &&
-        sceneObjects[closestObject]->intersect(cameraPosition, C).P + EPSILON < intersections[closestObject].P) {
+    vec4 reflection2 = reflect(-C, N);
+    if (sceneObjects[closestObject]->shadingValues.Kr != 0) {
         color4 mirror_color = castRay(intersections[closestObject].P, reflection2, lastHitObject, depth + 1);
         if (mirror_color.x != 0 && mirror_color.y != 0 && mirror_color.z != 0)
             return mirror_color;
         else return castRay(intersections[closestObject].P + EPSILON, reflection2, lastHitObject, depth + 1);
     }
     // transparence
-    color.w = (1.0 - sceneObjects[closestObject]->shadingValues.Kt);
+    if (sceneObjects[closestObject]->shadingValues.Kt != 0) {
+
+    }
 
 	return color;
 
