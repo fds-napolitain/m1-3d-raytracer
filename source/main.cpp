@@ -21,7 +21,7 @@ point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
 std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
-int lightSpotSampling = 400; // carré 20 * 20
+int lightSpotSampling = 40; // carré 20 * 20
 
 //Recursion depth for raytracer
 int maxDepth = 3;
@@ -312,7 +312,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.x /= cmax;
     color.y /= cmax;
     color.z /= cmax;
-    color.w = 1;
+    color.w = (1.0 - sceneObjects[closestObject]->shadingValues.Kt);
 
     // ombres brut (image attendu)
     //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
@@ -323,6 +323,20 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.x *= shadow;
     color.y *= shadow;
     color.z *= shadow;
+
+    vec4 C = normalize(intersections[closestObject].P - cameraPosition); // camera
+    
+    // reflection
+    vec4 reflection2 = normalize(reflect(-1 * intersections[closestObject].P, N));
+    if (sceneObjects[closestObject]->shadingValues.Kr != 0 &&
+        sceneObjects[closestObject]->intersect(cameraPosition, C).P + EPSILON < intersections[closestObject].P) {
+        color4 mirror_color = castRay(intersections[closestObject].P, reflection2, lastHitObject, depth + 1);
+        if (mirror_color.x != 0 && mirror_color.y != 0 && mirror_color.z != 0)
+            return mirror_color;
+        else return castRay(intersections[closestObject].P + EPSILON, reflection2, lastHitObject, depth + 1);
+    }
+    // transparence
+    color.w = (1.0 - sceneObjects[closestObject]->shadingValues.Kt);
 
 	return color;
 
