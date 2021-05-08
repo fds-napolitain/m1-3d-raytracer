@@ -330,12 +330,19 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color4 mirror_color;
     if (sceneObjects[closestObject.ID_]->shadingValues.Ks != 0) {
         mirror_color = castRay(closestObject.P + EPSILON, reflection2, lastHitObject, depth + 1);
-        
     }
     // transparence
     color4 glass_color;
     if (sceneObjects[closestObject.ID_]->shadingValues.Kt != 0) {
-        glass_color = castRay(closestObject.P + EPSILON, E, lastHitObject, depth + 1);
+        if (depth == 0) {
+            double theta = sceneObjects[closestObject.ID_]->shadingValues.Kr;
+            vec4 V = cos(theta) * E
+                + (1 - cos(theta)) * (dot(E, N)) * N
+                + sin(theta) * (cross(N, E));
+            glass_color = castRay(closestObject.P, V, lastHitObject, depth + 1);
+        } else {
+            glass_color = castRay(closestObject.P, E, lastHitObject, depth + 1);
+        }
     }
 
     return glass_color * sceneObjects[closestObject.ID_]->shadingValues.Kt
@@ -485,7 +492,7 @@ void initCornellBox(){
   _shadingValues.Kd = 0.0;
   _shadingValues.Ks = 0.0;
   _shadingValues.Kn = 16.0;
-  _shadingValues.Kt = 1.0;
+  _shadingValues.Kt = 0.5; // coeff transparence, 1 transparent, 0 opaque
   _shadingValues.Kr = 1.4;
   sceneObjects[sceneObjects.size()-1]->setShadingValues(_shadingValues);
   sceneObjects[sceneObjects.size()-1]->setModelView(mat4());
