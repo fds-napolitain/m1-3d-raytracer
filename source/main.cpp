@@ -21,7 +21,7 @@ point4 lightPosition;
 color4 lightColor;
 point4 cameraPosition;
 std::vector<point4> lightSpot; // spot de lumiere (ombre douce)
-int lightSpotSampling = 40; // carré 20 * 20
+int lightSpotSampling = 100; // carré 20 * 20
 
 //Recursion depth for raytracer
 int maxDepth = 3;
@@ -255,33 +255,34 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 	if(depth > maxDepth){ return color; }
 
 	//TODO: Raytracing code here
-	std::vector<Object::IntersectionValues> intersections;
-    for (int i = 0; i < sceneObjects.size(); i++) {
-        intersections.push_back(sceneObjects[i]->intersect(p0, E));
-        intersections[i].ID_ = i;
-    }
+    // j'ai changé ici : suppression du tableau d'intersections inutilisés (ya que l'ID le meilleur qui l'était)
+    // utilisation d'un closest object uniquement en tant qu'objet
+    // moins dur pour le cpu/ram (pas de tableau par recursivité)
+    Object::IntersectionValues object;
+    Object::IntersectionValues closestObject;
     double minDist = std::numeric_limits<double>::infinity();
-    int closestObject = -1;
-	for (int i = 0; i < intersections.size(); ++i) {
-        if (intersections[i].t < minDist) {
-            minDist = intersections[i].t;
-            closestObject = i;
+    for (int i = 0; i < sceneObjects.size(); i++) {
+        object = sceneObjects[i]->intersect(p0, E);
+        if (object.t < minDist) {
+            closestObject = object;
+            closestObject.ID_ = i;
+            minDist = object.t;
         }
-	}
-    if (closestObject < 0) {
+    }
+    if (minDist == std::numeric_limits<double>::infinity()) {
         return color;
     }
-    color = sceneObjects[closestObject]->shadingValues.color;
+    color = sceneObjects[closestObject.ID_]->shadingValues.color;
 
-    vec4 N = normalize(intersections[closestObject].N);
-    vec4 L = normalize(lightPosition - intersections[closestObject].P); // lumière
+    vec4 N = normalize(closestObject.N);
+    vec4 L = normalize(lightPosition - closestObject.P); // lumière
     vec4 reflection = normalize(reflect(L, N));
     GLfloat costheta = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costheta * ||N|| * ||L||
 
     color4 material_ambient(
-        lightColor.x * sceneObjects[closestObject]->shadingValues.Ka,
-        lightColor.y * sceneObjects[closestObject]->shadingValues.Ka,
-        lightColor.z * sceneObjects[closestObject]->shadingValues.Ka, 1.0
+        lightColor.x * sceneObjects[closestObject.ID_]->shadingValues.Ka,
+        lightColor.y * sceneObjects[closestObject.ID_]->shadingValues.Ka,
+        lightColor.z * sceneObjects[closestObject.ID_]->shadingValues.Ka, 1.0
     );
 
     color4 material_diffuse(
@@ -291,12 +292,12 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     );
 
     color4 material_specular(
-        sceneObjects[closestObject]->shadingValues.Ks,
-        sceneObjects[closestObject]->shadingValues.Ks,
-        sceneObjects[closestObject]->shadingValues.Ks, 1.0
+        sceneObjects[closestObject.ID_]->shadingValues.Ks,
+        sceneObjects[closestObject.ID_]->shadingValues.Ks,
+        sceneObjects[closestObject.ID_]->shadingValues.Ks, 1.0
     );
 
-    float material_shininess = sceneObjects[closestObject]->shadingValues.Kn;
+    float material_shininess = sceneObjects[closestObject.ID_]->shadingValues.Kn;
 
     color4 ambient_product = GLState::light_ambient * material_ambient;
     color4 diffuse_product = GLState::light_diffuse * material_diffuse * fmax(0.0f, costheta);
@@ -319,7 +320,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     //    return vec4(0.0, 0.0, 0.0, 1.0);
 
     // ombres douces
-    double shadow = shadowFeeler(intersections[closestObject].P);
+    double shadow = shadowFeeler(closestObject.P);
     color.x *= shadow;
     color.y *= shadow;
     color.z *= shadow;
@@ -327,19 +328,21 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     // reflection
     vec4 reflection2 = normalize(reflect(E, N));
     color4 mirror_color;
-    if (sceneObjects[closestObject]->shadingValues.Ks != 0) {
-        mirror_color = castRay(intersections[closestObject].P + EPSILON, reflection2, lastHitObject, depth + 1);
+    if (sceneObjects[closestObject.ID_]->shadingValues.Ks != 0) {
+        mirror_color = castRay(closestObject.P + EPSILON, reflection2, lastHitObject, depth + 1);
         
     }
     // transparence
     color4 glass_color;
-    while (sceneObjects[closestObject]->shadingValues.Kt != 0) {
-        glass_color = castRay(intersections[closestObject].P + EPSILON, E, lastHitObject, depth + 1);
+    if (sceneObjects[closestObject.ID_]->shadingValues.Kt != 0) {
+        glass_color = castRay(closestObject.P + EPSILON, E, lastHitObject, depth + 1);
     }
 
-    return glass_color * sceneObjects[closestObject]->shadingValues.Kt
-        + mirror_color * sceneObjects[closestObject]->shadingValues.Ks
-        + color * (1 - sceneObjects[closestObject]->shadingValues.Ks - sceneObjects[closestObject]->shadingValues.Kt);
+    return glass_color * sceneObjects[closestObject.ID_]->shadingValues.Kt
+        + mirror_color * sceneObjects[closestObject.ID_]->shadingValues.Ks
+        + color * (1 
+            - sceneObjects[closestObject.ID_]->shadingValues.Ks
+            - sceneObjects[closestObject.ID_]->shadingValues.Kt);
 
 }
 
