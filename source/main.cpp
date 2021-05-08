@@ -323,23 +323,23 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.x *= shadow;
     color.y *= shadow;
     color.z *= shadow;
-
-    vec4 C = normalize(intersections[closestObject].P - cameraPosition); // camera
     
     // reflection
-    vec4 reflection2 = reflect(-C, N);
-    if (sceneObjects[closestObject]->shadingValues.Kr != 0) {
-        color4 mirror_color = castRay(intersections[closestObject].P, reflection2, lastHitObject, depth + 1);
-        if (mirror_color.x != 0 && mirror_color.y != 0 && mirror_color.z != 0)
-            return mirror_color;
-        else return castRay(intersections[closestObject].P + EPSILON, reflection2, lastHitObject, depth + 1);
+    vec4 reflection2 = normalize(reflect(E, N));
+    color4 mirror_color;
+    if (sceneObjects[closestObject]->shadingValues.Ks != 0) {
+        mirror_color = castRay(intersections[closestObject].P + EPSILON, reflection2, lastHitObject, depth + 1);
+        
     }
     // transparence
-    if (sceneObjects[closestObject]->shadingValues.Kt != 0) {
-
+    color4 glass_color;
+    while (sceneObjects[closestObject]->shadingValues.Kt != 0) {
+        glass_color = castRay(intersections[closestObject].P + EPSILON, E, lastHitObject, depth + 1);
     }
 
-	return color;
+    return glass_color * sceneObjects[closestObject]->shadingValues.Kt
+        + mirror_color * sceneObjects[closestObject]->shadingValues.Ks
+        + color * (1 - sceneObjects[closestObject]->shadingValues.Ks - sceneObjects[closestObject]->shadingValues.Kt);
 
 }
 
@@ -494,7 +494,7 @@ void initCornellBox(){
   _shadingValues.color = vec4(1.0,1.0,1.0,1.0);
   _shadingValues.Ka = 0.0;
   _shadingValues.Kd = 0.0;
-  _shadingValues.Ks = 1.0;
+  _shadingValues.Ks = 0.5; // coef mirroir, 1 = a fond, 0 desactivé
   _shadingValues.Kn = 16.0;
   _shadingValues.Kt = 0.0;
   _shadingValues.Kr = 0.0;
