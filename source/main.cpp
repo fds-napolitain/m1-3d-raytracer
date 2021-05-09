@@ -230,7 +230,7 @@ bool shadowFeeler(vec4 p0, Object *object){
 }
 
 // ombre douce (retourne un pourcentage entre 0.0 et 1.0)
-double shadowFeeler(vec4 p0) {
+double shadowFeeler2(vec4 p0, Object *object) {
     double inShadow = 1.0;
 
     // Shadow code here
@@ -276,7 +276,6 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     if (minDist == std::numeric_limits<double>::infinity()) {
         return color;
     }
-    if (closestObject == NULL) closestObject = lastHitObject;
 
     color = closestObject->shadingValues.color;
 
@@ -326,7 +325,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     //    return vec4(0.0, 0.0, 0.0, 1.0);
 
     // ombres douces
-    double shadow = shadowFeeler(closestValues.P);
+    double shadow = shadowFeeler2(closestValues.P, closestObject);
     color.x *= shadow;
     color.y *= shadow;
     color.z *= shadow;
@@ -344,12 +343,12 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
             double theta_i = acos(dot(E, N) / (dot(N, N) * dot(E, E)));
             double theta_r = asin(sin(theta_i) / closestObject->shadingValues.Kr);
             vec4 V = E * cos(theta_r);
-            glass_color = castRay(closestValues.P, V, closestObject, depth + 1);
+            glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
         } else if (lastHitObject != closestObject) {
             double theta_i = acos(dot(E, N) / (dot(N, N) * dot(E, E)));
             double theta_r = asin(sin(theta_i) / closestObject->shadingValues.Kr * lastHitObject->shadingValues.Kr);
             vec4 V = E * cos(theta_r);
-            glass_color = castRay(closestValues.P, V, closestObject, depth + 1);
+            glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
         } else {
             glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
         }
@@ -514,7 +513,7 @@ void initCornellBox(){
   _shadingValues.color = vec4(1.0,1.0,1.0,1.0);
   _shadingValues.Ka = 0.0;
   _shadingValues.Kd = 0.0;
-  _shadingValues.Ks = 0.5; // coef mirroir, 1 = a fond, 0 desactivé
+  _shadingValues.Ks = 1; // coef mirroir, 1 = a fond, 0 desactivé
   _shadingValues.Kn = 16.0;
   _shadingValues.Kt = 0.0;
   _shadingValues.Kr = 0.0;
