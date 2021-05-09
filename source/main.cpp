@@ -259,7 +259,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     // utilisation d'un closest object uniquement ainsi que values
     // moins dur pour le cpu/ram (pas de tableau par recursivité)
     // closest object (prochain lasthitobject en recursif)
-    // closest values = intersections[closestObjectId]
+    // closest values = intersections[closestObjectID]
     Object* closestObject = NULL;
     Object::IntersectionValues values;
     Object::IntersectionValues closestValues;
@@ -276,6 +276,8 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     if (minDist == std::numeric_limits<double>::infinity()) {
         return color;
     }
+    if (closestObject == NULL) closestObject = lastHitObject;
+
     color = closestObject->shadingValues.color;
 
     vec4 N = normalize(closestValues.N);
@@ -320,7 +322,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     color.w = 1.0;
 
     // ombres brut (image attendu)
-    //if (shadowFeeler(intersections[closestObject].P, sceneObjects[closestObject]))
+    //if (shadowFeeler(closestValues.P, closestObject))
     //    return vec4(0.0, 0.0, 0.0, 1.0);
 
     // ombres douces
@@ -338,9 +340,14 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     // transparence
     color4 glass_color;
     if (closestObject->shadingValues.Kt != 0) {
-        if (depth == 0) {
+        if (lastHitObject == NULL) {
             double theta_i = acos(dot(E, N) / (dot(N, N) * dot(E, E)));
             double theta_r = asin(sin(theta_i) / closestObject->shadingValues.Kr);
+            vec4 V = E * cos(theta_r);
+            glass_color = castRay(closestValues.P, V, closestObject, depth + 1);
+        } else if (lastHitObject != closestObject) {
+            double theta_i = acos(dot(E, N) / (dot(N, N) * dot(E, E)));
+            double theta_r = asin(sin(theta_i) / closestObject->shadingValues.Kr * lastHitObject->shadingValues.Kr);
             vec4 V = E * cos(theta_r);
             glass_color = castRay(closestValues.P, V, closestObject, depth + 1);
         } else {
