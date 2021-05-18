@@ -342,26 +342,17 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
         if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
             glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
         } else {
-            double cos_i = dot(E, N);
+            double theta_i = dot(E, N) / (length(E) * length(N));
             double k;
-            vec4 norm = N;
-            if (cos_i < 0) {
-                cos_i = -cos_i;
-            } else {
-                norm = -N;
-            }
             if (lastHitObject == NULL) {
                 k = 1 / closestObject->shadingValues.Kr;
             } else {
                 k = lastHitObject->shadingValues.Kr / closestObject->shadingValues.Kr;
             }
-            double c = 1 - k * k * (1 - cos_i * cos_i);
-            if (c < 0) {
-                glass_color = vec4(0, 0, 0, 1);
-            } else {
-                vec4 V = k * E + (k * cos_i - sqrt(c)) * norm;
-                glass_color = castRay(closestValues.P + (EPSILON * norm), V, closestObject, depth + 1);
-            }
+            double c1 = dot(N, E);
+            double c2 = sqrt(1 - k * k * sin(theta_i) * sin(theta_i));
+            vec4 V = k * E + (k * c1 - c2) * N;
+            glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
         }
     }
 
