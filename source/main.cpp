@@ -342,17 +342,49 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
         if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
             glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
         } else {
-            double theta_i = dot(E, N) / (length(E) * length(N));
+            double theta_i = acos(dot(E, N) / (dot(E, E) * dot(N, N)));
             double k;
+            vec4 norm = N;
+            if (cos(theta_i) < 0) {
+                theta_i += 180;
+            } else {
+                norm = -N;
+            }
             if (lastHitObject == NULL) {
                 k = 1 / closestObject->shadingValues.Kr;
             } else {
                 k = lastHitObject->shadingValues.Kr / closestObject->shadingValues.Kr;
             }
-            double c1 = dot(N, E);
-            double c2 = sqrt(1 - k * k * sin(theta_i) * sin(theta_i));
-            vec4 V = k * E + (k * c1 - c2) * N;
-            glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
+            double c1 = cos(theta_i);
+            double c2 = sqrt(1 - k * k * cos(theta_i) * cos(theta_i));
+            vec4 V = k * E + (k * c1 - c2) * norm;
+            glass_color = castRay(closestValues.P + (EPSILON * norm), V, closestObject, depth + 1);
+        }    color4 glass_color;
+        if (closestObject->shadingValues.Kt != 0) {
+            if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
+                glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
+            } else {
+                double n, n1, n2;
+                vec4 norm = N;
+                if (lastHitObject == closestObject) {
+                    n1 = closestObject->shadingValues.Kr;
+                    n2 = 1.0;
+                } else {
+                    n1 = 1.0;
+                    n2 = closestObject->shadingValues.Kr;
+                }
+                n = n1 / n2;
+                double c1 = dot(E, N);
+                if (c1 < 0) {
+                    c1 = -c1;
+                } else {
+                    norm = -N;
+                    std::swap(n1, n2);
+                }
+                double c2 = sqrt(1 - n * n * c1 * c1);
+                vec4 V = n * E + (n * c1 - c2) * N;
+                glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
+            }
         }
     }
 
