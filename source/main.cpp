@@ -341,26 +341,25 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     // transparence
     color4 glass_color;
     if (closestObject->shadingValues.Kt != 0) {
-        if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
-            glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
-        } else {
-            double n, n1, n2;
-            double cos_theta_i = dot(E, N); // deja normalisé
-            vec4 norm = N;
-            if (cos_theta_i < 0) {
-                cos_theta_i = -cos_theta_i;
-                n1 = 1.0;
-                n2 = closestObject->shadingValues.Kr;
-            } else {
-                norm = -N;
-                n1 = closestObject->shadingValues.Kr;
-                n2 = 1.0;
-            }
-            n = n1 / n2;
-            double k = 1 - n * n * (1 - cos_theta_i * cos_theta_i);
-            vec4 V = n * E + (n * cos_theta_i - sqrtf(k)) * norm;
-            glass_color = k < 0 ? vec4(0, 0, 0, 1) : castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
+        if (closestObject == lastHitObject) {
+            glass_color = castRay(closestValues.P + (EPSILON * E), E, closestObject, depth + 1);
         }
+        double n, n1, n2;
+        double cos_theta_i = dot(E, N); // deja normalisé
+        vec4 norm = N;
+        if (cos_theta_i < 0) {
+            cos_theta_i = -cos_theta_i;
+            n1 = 1.0;
+            n2 = closestObject->shadingValues.Kr;
+        } else {
+            norm = -N;
+            n1 = closestObject->shadingValues.Kr;
+            n2 = 1.0;
+        }
+        n = n1 / n2;
+        double k = 1 - n * n * (1 - cos_theta_i * cos_theta_i);
+        vec4 V = n * E + (n * cos_theta_i - sqrtf(k)) * norm;
+        glass_color = k < 0 ? vec4(0, 0, 0, 1) : castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
     }
     color4 final_color = glass_color * closestObject->shadingValues.Kt
         + mirror_color * closestObject->shadingValues.Ks
