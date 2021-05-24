@@ -237,10 +237,9 @@ double shadowFeeler2(vec4 p0, Object *object) {
     Object::IntersectionValues closestValues;
     for (int i = 0; i < sceneObjects.size(); i++) {
         for (int j = 0; j < lightSpotSampling; j++) {
-            closestValues = sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]);
-            if (closestValues.t + EPSILON < 1.0) {
-                if (sceneObjects[closestValues.ID_]->shadingValues.Kt != 0) {
-                    inShadow -= (1.0 / lightSpotSampling) * (1 - sceneObjects[closestValues.ID_]->shadingValues.Kt);
+            if (sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]).t + EPSILON < 1.0) {
+                if (sceneObjects[i]->shadingValues.Kt != 0) {
+                    inShadow -= (1.0 / lightSpotSampling) * (1 - sceneObjects[i]->shadingValues.Kt);
                 } else {
                     inShadow -= 1.0 / lightSpotSampling;
                 }
@@ -272,9 +271,9 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     double minDist = std::numeric_limits<double>::infinity();
     for (int i = 0; i < sceneObjects.size(); i++) {
         values = sceneObjects[i]->intersect(p0, E);
+        values.ID_ = i;
         if (values.t < minDist) {
             closestValues = values;
-            closestValues.ID_ = i;
             closestObject = sceneObjects[i];
             minDist = values.t;
         }
@@ -348,18 +347,14 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
             double n, n1, n2;
             double cos_theta_i = dot(E, N); // deja normalisé
             vec4 norm = N;
-            if (lastHitObject == closestObject) {
-                n1 = closestObject->shadingValues.Kr;
-                n2 = 1.0;
-            } else {
-                n1 = 1.0;
-                n2 = closestObject->shadingValues.Kr;
-            }
             if (cos_theta_i < 0) {
                 cos_theta_i = -cos_theta_i;
+                n1 = 1.0;
+                n2 = closestObject->shadingValues.Kr;
             } else {
                 norm = -N;
-                std::swap(n1, n2);
+                n1 = closestObject->shadingValues.Kr;
+                n2 = 1.0;
             }
             n = n1 / n2;
             double k = 1 - n * n * (1 - cos_theta_i * cos_theta_i);
@@ -529,7 +524,7 @@ void initCornellBox(){
   _shadingValues.color = vec4(1.0,1.0,1.0,1.0);
   _shadingValues.Ka = 0.0;
   _shadingValues.Kd = 0.0;
-  _shadingValues.Ks = 1; // coef mirroir, 1 = a fond, 0 desactivé
+  _shadingValues.Ks = 1.0; // coef mirroir, 1 = a fond, 0 desactivé
   _shadingValues.Kn = 16.0;
   _shadingValues.Kt = 0.0;
   _shadingValues.Kr = 0.0;
