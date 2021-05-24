@@ -234,10 +234,16 @@ double shadowFeeler2(vec4 p0, Object *object) {
     double inShadow = 1.0;
 
     // Shadow code here
+    Object::IntersectionValues closestValues;
     for (int i = 0; i < sceneObjects.size(); i++) {
         for (int j = 0; j < lightSpotSampling; j++) {
-            if (sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]).t + EPSILON < 1.0) {
-                inShadow -= 1.0/lightSpotSampling;
+            closestValues = sceneObjects[i]->intersect(lightSpot[j], p0 - lightSpot[j]);
+            if (closestValues.t + EPSILON < 1.0) {
+                if (sceneObjects[closestValues.ID_]->shadingValues.Kt != 0) {
+                    inShadow -= (1.0 / lightSpotSampling) * (1 - sceneObjects[closestValues.ID_]->shadingValues.Kt);
+                } else {
+                    inShadow -= 1.0 / lightSpotSampling;
+                }
             }
         }
     }
@@ -282,7 +288,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     vec4 N = normalize(closestValues.N);
     vec4 L = normalize(lightPosition - closestValues.P); // lumière
     vec4 reflection = normalize(reflect(L, N));
-    GLfloat costheta_l = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costheta * ||N|| * ||L||
+    double costheta_l = dot(L, N) / (dot(N, N) * dot(L, L)); // dot(L, N) = costheta * ||N|| * ||L||
 
     color4 material_ambient(
         lightColor.x * closestObject->shadingValues.Ka,
@@ -305,7 +311,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     float material_shininess = closestObject->shadingValues.Kn;
 
     color4 ambient_product = GLState::light_ambient * material_ambient;
-    color4 diffuse_product = GLState::light_diffuse * material_diffuse * fmax(0.0f, costheta_l);
+    color4 diffuse_product = GLState::light_diffuse * material_diffuse * fmax(0, costheta_l);
     color4 specular_product = GLState::light_specular * material_specular * pow(fmax(0.0f, dot(reflection, E)), material_shininess);
 
     color *= (ambient_product + diffuse_product + specular_product);
@@ -313,7 +319,7 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
     // dépassement couleur
     float cmax = 1.0f;
     for (int i = 0; i < 3; i++) {
-        cmax = max(color[i], cmax);
+        cmax = fmax(color[i], cmax);
     }
     color.x /= cmax;
     color.y /= cmax;
@@ -326,9 +332,6 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
 
     // ombres douces
     double shadow = shadowFeeler2(closestValues.P, closestObject);
-    color.x *= shadow;
-    color.y *= shadow;
-    color.z *= shadow;
     
     // reflection
     vec4 reflection2 = normalize(reflect(E, N));
@@ -342,58 +345,37 @@ vec4 castRay(vec4 p0, vec4 E, Object *lastHitObject, int depth){
         if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
             glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
         } else {
-            double theta_i = acos(dot(E, N) / (dot(E, E) * dot(N, N)));
-            double k;
+            double n, n1, n2;
+            double cos_theta_i = dot(E, N); // deja normalisé
             vec4 norm = N;
-            if (cos(theta_i) < 0) {
-                theta_i += 180;
+            if (lastHitObject == closestObject) {
+                n1 = closestObject->shadingValues.Kr;
+                n2 = 1.0;
+            } else {
+                n1 = 1.0;
+                n2 = closestObject->shadingValues.Kr;
+            }
+            if (cos_theta_i < 0) {
+                cos_theta_i = -cos_theta_i;
             } else {
                 norm = -N;
+                std::swap(n1, n2);
             }
-            if (lastHitObject == NULL) {
-                k = 1 / closestObject->shadingValues.Kr;
-            } else {
-                k = lastHitObject->shadingValues.Kr / closestObject->shadingValues.Kr;
-            }
-            double c1 = cos(theta_i);
-            double c2 = sqrt(1 - k * k * cos(theta_i) * cos(theta_i));
-            vec4 V = k * E + (k * c1 - c2) * norm;
-            glass_color = castRay(closestValues.P + (EPSILON * norm), V, closestObject, depth + 1);
-        }    color4 glass_color;
-        if (closestObject->shadingValues.Kt != 0) {
-            if (!(lastHitObject == NULL && lastHitObject != closestObject)) {
-                glass_color = castRay(closestValues.P, E, closestObject, depth + 1);
-            } else {
-                double n, n1, n2;
-                vec4 norm = N;
-                if (lastHitObject == closestObject) {
-                    n1 = closestObject->shadingValues.Kr;
-                    n2 = 1.0;
-                } else {
-                    n1 = 1.0;
-                    n2 = closestObject->shadingValues.Kr;
-                }
-                n = n1 / n2;
-                double c1 = dot(E, N);
-                if (c1 < 0) {
-                    c1 = -c1;
-                } else {
-                    norm = -N;
-                    std::swap(n1, n2);
-                }
-                double c2 = sqrt(1 - n * n * c1 * c1);
-                vec4 V = n * E + (n * c1 - c2) * N;
-                glass_color = castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
-            }
+            n = n1 / n2;
+            double k = 1 - n * n * (1 - cos_theta_i * cos_theta_i);
+            vec4 V = n * E + (n * cos_theta_i - sqrtf(k)) * norm;
+            glass_color = k < 0 ? vec4(0, 0, 0, 1) : castRay(closestValues.P + (EPSILON * V), V, closestObject, depth + 1);
         }
     }
-
-    return glass_color * closestObject->shadingValues.Kt
+    color4 final_color = glass_color * closestObject->shadingValues.Kt
         + mirror_color * closestObject->shadingValues.Ks
-        + color * (1 
+        + color * (1
             - closestObject->shadingValues.Ks
             - closestObject->shadingValues.Kt);
-
+    final_color.x *= shadow;
+    final_color.y *= shadow;
+    final_color.z *= shadow;
+    return final_color;
 }
 
 /* -------------------------------------------------------------------------- */
